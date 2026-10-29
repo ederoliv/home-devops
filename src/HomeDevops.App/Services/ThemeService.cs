@@ -9,6 +9,8 @@ namespace HomeDevops.Services;
 /// <summary>Aplica as cores escolhidas: troca os pincéis do tema e pinta a barra de título das janelas.</summary>
 public sealed class ThemeService
 {
+    private const int DwmWindowCornerPreference = 33;
+    private const int DwmDoNotRound = 1;
     private const int DwmUseImmersiveDarkMode = 20;
     private const int DwmCaptionColor = 35;
     private const int DwmTextColor = 36;
@@ -35,7 +37,10 @@ public sealed class ThemeService
         }
     }
 
-    /// <summary>Pinta a barra de título com as cores do tema (Windows 11; em versões antigas é ignorado).</summary>
+    /// <summary>
+    /// Deixa a janela com cantos quadrados e pinta a barra de título com as cores do tema
+    /// (Windows 11; em versões antigas é ignorado).
+    /// </summary>
     public void ApplyTitleBar(Window window)
     {
         var handle = new WindowInteropHelper(window).Handle;
@@ -44,6 +49,7 @@ public sealed class ThemeService
             return;
         }
 
+        SetAttribute(handle, DwmWindowCornerPreference, DwmDoNotRound);
         SetAttribute(handle, DwmUseImmersiveDarkMode, _palette.IsDark ? 1 : 0);
         SetAttribute(handle, DwmCaptionColor, ColorRef(_palette.Bg));
         SetAttribute(handle, DwmTextColor, ColorRef(_palette.Text));

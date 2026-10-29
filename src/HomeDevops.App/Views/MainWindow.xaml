@@ -47,7 +47,6 @@
             <Border Background="{DynamicResource PanelBrush}"
                     BorderBrush="{DynamicResource LineBrush}"
                     BorderThickness="1"
-                    CornerRadius="8"
                     Margin="0,0,0,10">
                 <StackPanel>
                     <Border Background="Transparent" Padding="14,10" Cursor="Hand">
@@ -162,7 +161,6 @@
             <Setter Property="Background" Value="{DynamicResource PanelBrush}" />
             <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}" />
             <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="CornerRadius" Value="8" />
             <Setter Property="Padding" Value="16,10" />
             <Setter Property="MinWidth" Value="130" />
             <Setter Property="Margin" Value="0,0,12,0" />
@@ -245,7 +243,6 @@
                                     <Border Background="{DynamicResource Panel2Brush}"
                                             BorderBrush="{DynamicResource LineBrush}"
                                             BorderThickness="1"
-                                            CornerRadius="7"
                                             Visibility="{Binding Image, Converter={StaticResource NoValueToVisible}}">
                                         <TextBlock Text="{Binding Name, Converter={StaticResource FirstLetter}}"
                                                    HorizontalAlignment="Center"
@@ -253,8 +250,7 @@
                                                    FontWeight="SemiBold"
                                                    Foreground="{DynamicResource AccentBrush}" />
                                     </Border>
-                                    <Rectangle RadiusX="7" RadiusY="7"
-                                               Visibility="{Binding Image, Converter={StaticResource HasValueToVisible}}">
+                                    <Rectangle Visibility="{Binding Image, Converter={StaticResource HasValueToVisible}}">
                                         <Rectangle.Fill>
                                             <ImageBrush ImageSource="{Binding Image, Converter={StaticResource DataUrlToImage}}"
                                                         Stretch="UniformToFill" />

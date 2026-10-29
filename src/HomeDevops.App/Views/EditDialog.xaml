@@ -21,12 +21,10 @@
             <TextBlock Text="Logo" Style="{StaticResource MutedText}" FontSize="12" Margin="0,0,0,4" />
             <StackPanel Orientation="Horizontal">
                 <Border Width="56" Height="56"
-                        CornerRadius="10"
                         Background="{DynamicResource BgBrush}"
                         BorderBrush="{DynamicResource LineBrush}"
                         BorderThickness="1">
-                    <Rectangle RadiusX="9" RadiusY="9"
-                               Visibility="{Binding Image, Converter={StaticResource HasValueToVisible}}">
+                    <Rectangle Visibility="{Binding Image, Converter={StaticResource HasValueToVisible}}">
                         <Rectangle.Fill>
                             <ImageBrush ImageSource="{Binding Image, Converter={StaticResource DataUrlToImage}}"
                                         Stretch="UniformToFill" />

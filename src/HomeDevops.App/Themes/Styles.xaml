@@ -33,7 +33,6 @@
                     <Border Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
                             BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="6"
                             Padding="{TemplateBinding Padding}">
                         <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
                                           VerticalAlignment="{TemplateBinding VerticalContentAlignment}"
@@ -104,8 +103,7 @@
                     <Border x:Name="Bd"
                             Background="{TemplateBinding Background}"
                             BorderBrush="{TemplateBinding BorderBrush}"
-                            BorderThickness="{TemplateBinding BorderThickness}"
-                            CornerRadius="6">
+                            BorderThickness="{TemplateBinding BorderThickness}">
                         <ScrollViewer x:Name="PART_ContentHost" Margin="{TemplateBinding Padding}" />
                     </Border>
                     <ControlTemplate.Triggers>
@@ -136,7 +134,6 @@
                                 Background="{DynamicResource BgBrush}"
                                 BorderBrush="{DynamicResource LineBrush}"
                                 BorderThickness="1"
-                                CornerRadius="4"
                                 VerticalAlignment="Center">
                             <Path x:Name="Mark"
                                   Data="M3.5 9 L7.5 13 L14.5 5"
@@ -179,7 +176,6 @@
                             Background="{DynamicResource Panel2Brush}"
                             BorderBrush="{DynamicResource LineBrush}"
                             BorderThickness="1"
-                            CornerRadius="6"
                             Padding="12,6">
                         <ContentPresenter HorizontalAlignment="Center" />
                     </Border>
@@ -205,7 +201,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="RadioButton">
-                    <Border x:Name="Bd" Background="Transparent" CornerRadius="6" Padding="10,8">
+                    <Border x:Name="Bd" Background="Transparent" Padding="10,8">
                         <ContentPresenter HorizontalAlignment="Left" />
                     </Border>
                     <ControlTemplate.Triggers>
@@ -231,7 +227,7 @@
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="ComboBoxItem">
-                    <Border x:Name="Bd" Background="Transparent" Padding="{TemplateBinding Padding}" CornerRadius="4">
+                    <Border x:Name="Bd" Background="Transparent" Padding="{TemplateBinding Padding}">
                         <ContentPresenter />
                     </Border>
                     <ControlTemplate.Triggers>
@@ -265,8 +261,7 @@
                                     <Border x:Name="Bd"
                                             Background="{DynamicResource BgBrush}"
                                             BorderBrush="{DynamicResource LineBrush}"
-                                            BorderThickness="1"
-                                            CornerRadius="6">
+                                            BorderThickness="1">
                                         <Path Data="M0 0 L4 4 L8 0"
                                               Stroke="{DynamicResource MutedBrush}"
                                               StrokeThickness="1.6"
@@ -304,7 +299,6 @@
                                     Background="{DynamicResource Panel2Brush}"
                                     BorderBrush="{DynamicResource LineBrush}"
                                     BorderThickness="1"
-                                    CornerRadius="6"
                                     Padding="4">
                                 <ScrollViewer>
                                     <ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained" />
@@ -335,7 +329,6 @@
                             Background="Transparent"
                             BorderBrush="Transparent"
                             BorderThickness="1"
-                            CornerRadius="8"
                             Padding="5">
                         <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" />
                     </Border>
@@ -363,7 +356,6 @@
                 <ControlTemplate TargetType="ContentControl">
                     <Border BorderBrush="{TemplateBinding Foreground}"
                             BorderThickness="1"
-                            CornerRadius="10"
                             Padding="8,2">
                         <ContentPresenter />
                     </Border>
@@ -423,7 +415,7 @@
                                 <Thumb>
                                     <Thumb.Template>
                                         <ControlTemplate TargetType="Thumb">
-                                            <Border x:Name="Bd" Margin="2" CornerRadius="3" Background="{DynamicResource LineBrush}" />
+                                            <Border x:Name="Bd" Margin="2" Background="{DynamicResource LineBrush}" />
                                             <ControlTemplate.Triggers>
                                                 <Trigger Property="IsMouseOver" Value="True">
                                                     <Setter TargetName="Bd" Property="Background" Value="{DynamicResource MutedBrush}" />
@@ -467,7 +459,6 @@
         <Setter Property="Background" Value="{DynamicResource Panel2Brush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}" />
         <Setter Property="BorderThickness" Value="1" />
-        <Setter Property="CornerRadius" Value="8" />
         <Setter Property="Padding" Value="16,10" />
         <Setter Property="Margin" Value="16" />
         <Setter Property="MaxWidth" Value="520" />
