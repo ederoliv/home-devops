@@ -15,6 +15,7 @@ public partial class MainViewModel : ViewModelBase
     private const double AvatarExpanded = 28;
 
     private readonly ProjectStore _store;
+    private readonly CompanyStore _companyStore;
     private readonly ProjectTransfer _transfer;
     private readonly ConfigService _config;
     private readonly ThemeService _theme;
@@ -23,20 +24,36 @@ public partial class MainViewModel : ViewModelBase
 
     public MainViewModel(
         ProjectStore store,
+        CompanyStore companyStore,
         ProjectTransfer transfer,
         ConfigService config,
         ThemeService theme,
         IDialogService dialogs)
     {
         _store = store;
+        _companyStore = companyStore;
         _transfer = transfer;
         _config = config;
         _theme = theme;
         _dialogs = dialogs;
         _isSidebarCollapsed = config.Get<SidebarSettings>(ConfigSections.Sidebar).Collapsed;
+
+        // visão própria (e não a padrão da coleção, que a janela de configurações também usa)
+        CompanyProjects = new CollectionViewSource { Source = Projects }.View;
+        CompanyProjects.Filter = candidate => candidate is Project p && SelectedCompany is { } c && p.CompanyId == c.Id;
+        Projects.CollectionChanged += (_, _) => RefreshProjectCounts();
     }
 
+    public ObservableCollection<Company> Companies { get; } = [];
+
+    /// <summary>Todos os projetos, de todas as empresas.</summary>
     public ObservableCollection<Project> Projects { get; } = [];
+
+    /// <summary>Projetos da empresa selecionada.</summary>
+    public ICollectionView CompanyProjects { get; }
+
+    [ObservableProperty]
+    private Company? _selectedCompany;
 
     [ObservableProperty]
     private Project? _selectedProject;
@@ -75,17 +92,57 @@ public partial class MainViewModel : ViewModelBase
     public IReadOnlyList<string> Reload()
     {
         _store.Flush();
+        var companies = _companyStore.Load().OrderBy(c => c.CreatedAt).ToList();
         var result = _store.LoadAll();
+        var selectedCompanyId = SelectedCompany?.Id;
         var selectedId = SelectedProject?.Id;
 
+        // todo projeto precisa de uma empresa: os sem empresa (arquivos antigos ou importados) vão para a padrão
+        var orphans = result.Projects.Where(p => companies.All(c => c.Id != p.CompanyId)).ToList();
+        var companiesChanged = false;
+        if (orphans.Count > 0)
+        {
+            var fallback = companies.FirstOrDefault(c => c.Name == Company.DefaultName);
+            if (fallback is null)
+            {
+                fallback = new Company { Name = Company.DefaultName };
+                companies.Add(fallback);
+                companiesChanged = true;
+            }
+
+            foreach (var project in orphans)
+            {
+                project.CompanyId = fallback.Id;
+            }
+        }
+
         Projects.Clear();
+        Companies.Clear();
+        foreach (var company in companies)
+        {
+            Hook(company);
+            Companies.Add(company);
+        }
+
         foreach (var project in result.Projects)
         {
             Hook(project);
             Projects.Add(project);
         }
 
-        SelectedProject = Projects.FirstOrDefault(p => p.Id == selectedId) ?? Projects.FirstOrDefault();
+        if (companiesChanged)
+        {
+            SaveCompanies();
+        }
+
+        foreach (var project in orphans)
+        {
+            _store.MarkDirty(project);
+        }
+
+        SelectedCompany = Companies.FirstOrDefault(c => c.Id == selectedCompanyId) ?? Companies.FirstOrDefault();
+        SelectedProject = CompanyProjects.Cast<Project>().FirstOrDefault(p => p.Id == selectedId)
+            ?? CompanyProjects.Cast<Project>().FirstOrDefault();
 
         if (result.Skipped.Count > 0)
         {
@@ -95,11 +152,39 @@ public partial class MainViewModel : ViewModelBase
         return result.Skipped;
     }
 
+    partial void OnSelectedCompanyChanged(Company? value)
+    {
+        CompanyProjects.Refresh();
+        SelectedProject = CompanyProjects.Cast<Project>().FirstOrDefault();
+    }
+
     partial void OnSelectedProjectChanged(Project? value) => RebuildItemsView();
 
     partial void OnFilterChanged(ItemFilter value) => ItemsView?.Refresh();
 
     private void Hook(Project project) => project.Changed += (_, _) => _store.MarkDirty(project);
+
+    private void Hook(Company company) => company.Changed += (_, _) => SaveCompanies();
+
+    private void SaveCompanies()
+    {
+        try
+        {
+            _companyStore.Save(Companies);
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+        {
+            ShowToast($"Erro ao salvar as empresas: {e.Message}");
+        }
+    }
+
+    private void RefreshProjectCounts()
+    {
+        foreach (var company in Companies)
+        {
+            company.ProjectCount = Projects.Count(p => p.CompanyId == company.Id);
+        }
+    }
 
     private void RebuildItemsView()
     {
@@ -133,15 +218,96 @@ public partial class MainViewModel : ViewModelBase
         };
 
     [RelayCommand]
+    private void NewCompany()
+    {
+        var result = _dialogs.Edit(new EditRequest("Nova empresa", "Nome", ShowImage: true));
+        if (result is null)
+        {
+            return;
+        }
+
+        var company = new Company { Name = result.Name, Description = result.Description, Image = result.Image };
+        Hook(company);
+        Companies.Add(company);
+        SaveCompanies();
+        SelectedCompany = company;
+    }
+
+    [RelayCommand]
+    private void EditCompany()
+    {
+        if (SelectedCompany is not { } company)
+        {
+            return;
+        }
+
+        var result = _dialogs.Edit(new EditRequest("Editar empresa", "Nome", company.Name, company.Description, company.Image, ShowImage: true));
+        if (result is null)
+        {
+            return;
+        }
+
+        company.Name = result.Name;
+        company.Description = result.Description;
+        company.Image = result.Image;
+    }
+
+    [RelayCommand]
+    private void DeleteCompany()
+    {
+        if (SelectedCompany is not { } company)
+        {
+            return;
+        }
+
+        var owned = Projects.Where(p => p.CompanyId == company.Id).ToList();
+        var warning = owned.Count > 0
+            ? $"Excluir a empresa \"{company.Name}\" e seus {owned.Count} projeto(s), com tudo dentro? Os arquivos .hdp serão apagados."
+            : $"Excluir a empresa \"{company.Name}\"?";
+        if (!_dialogs.Confirm(warning))
+        {
+            return;
+        }
+
+        foreach (var project in owned)
+        {
+            Projects.Remove(project);
+            try
+            {
+                _store.Delete(project);
+            }
+            catch (Exception e) when (e is IOException or UnauthorizedAccessException)
+            {
+                ShowToast($"Erro ao apagar o arquivo: {e.Message}");
+            }
+        }
+
+        Companies.Remove(company);
+        SaveCompanies();
+        SelectedCompany = Companies.FirstOrDefault();
+    }
+
+    [RelayCommand]
     private void NewProject()
     {
+        if (SelectedCompany is not { } company)
+        {
+            return;
+        }
+
         var result = _dialogs.Edit(new EditRequest("Novo projeto", "Nome", ShowImage: true));
         if (result is null)
         {
             return;
         }
 
-        var project = new Project { Name = result.Name, Description = result.Description, Image = result.Image };
+        var project = new Project
+        {
+            CompanyId = company.Id,
+            Name = result.Name,
+            Description = result.Description,
+            Image = result.Image,
+        };
         Hook(project);
         Projects.Add(project);
         SelectedProject = project;
@@ -177,7 +343,7 @@ public partial class MainViewModel : ViewModelBase
         }
 
         Projects.Remove(project);
-        SelectedProject = Projects.FirstOrDefault();
+        SelectedProject = CompanyProjects.Cast<Project>().FirstOrDefault();
         try
         {
             _store.Delete(project);

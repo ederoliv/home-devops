@@ -1,8 +1,8 @@
 # Home DevOps
 
-Azure DevOps pessoal e local, em escala bem menor: projetos, features e bugs com tarefas, para saber o que já foi desenvolvido em cada projeto. WPF + .NET 10.
+Azure DevOps pessoal e local, em escala bem menor: empresas, que têm projetos, que têm features e bugs com tarefas, para saber o que já foi desenvolvido em cada projeto. WPF + .NET 10.
 
-Cada projeto é um arquivo `.hdp` (JSON) em `Documentos\HomeDevops Projects`. As configurações ficam em `~\.homeDevops\config.json`.
+Cada projeto é um arquivo `.hdp` (JSON) em `Documentos\HomeDevops Projects`, com o `companyId` da empresa dona. As empresas ficam juntas em `companies.json` na mesma pasta (e entram no backup). Projetos sem empresa válida (arquivos antigos ou importados) vão para a empresa "Sem empresa", criada automaticamente. As configurações ficam em `~\.homeDevops\config.json`.
 
 ## Estrutura
 

@@ -11,6 +11,8 @@ public sealed record TransferReport(int Count, IReadOnlyList<string> Skipped);
 /// <summary>Backup (zip com todos os .hdp) e importação/exportação de projetos avulsos.</summary>
 public sealed class ProjectTransfer(ProjectStore store)
 {
+    private readonly CompanyStore _companies = new(store.Folder);
+
     /// <summary>
     /// Copia .hdp escolhidos pelo usuário para a pasta de projetos. Nunca sobrescreve: se o id já existe,
     /// o projeto entra como uma cópia com id novo.
@@ -75,7 +77,7 @@ public sealed class ProjectTransfer(ProjectStore store)
         return Path.GetFileName(target);
     }
 
-    /// <summary>Zipa todos os .hdp (na raiz do zip). Retorna quantos entraram.</summary>
+    /// <summary>Zipa todos os .hdp e o companies.json (na raiz do zip). Retorna quantos projetos entraram.</summary>
     public int CreateBackup(string zipPath)
     {
         store.Flush();
@@ -88,12 +90,18 @@ public sealed class ProjectTransfer(ProjectStore store)
             zip.CreateEntryFromFile(file, Path.GetFileName(file));
         }
 
+        if (File.Exists(_companies.Path))
+        {
+            zip.CreateEntryFromFile(_companies.Path, CompanyStore.FileName);
+        }
+
         return files.Count;
     }
 
     /// <summary>
     /// Move os .hdp do zip para a pasta de projetos. Projeto com id já existente substitui o atual
-    /// (mantendo o nome do arquivo dele); os demais entram como arquivos novos.
+    /// (mantendo o nome do arquivo dele); os demais entram como arquivos novos. As empresas do backup
+    /// seguem a mesma regra: mesmo id substitui, as outras são adicionadas.
     /// </summary>
     public TransferReport RestoreBackup(string zipPath)
     {
@@ -106,6 +114,12 @@ public sealed class ProjectTransfer(ProjectStore store)
         foreach (var entry in zip.Entries)
         {
             // Name é só o último trecho do caminho: qualquer subpasta dentro do zip é descartada
+            if (entry.Name.Equals(CompanyStore.FileName, StringComparison.OrdinalIgnoreCase))
+            {
+                RestoreCompanies(entry, skipped);
+                continue;
+            }
+
             if (entry.Name.Length == 0 || !FileNames.IsProjectFile(entry.Name))
             {
                 continue;
@@ -141,6 +155,38 @@ public sealed class ProjectTransfer(ProjectStore store)
         }
 
         return new TransferReport(restored, skipped);
+    }
+
+    private void RestoreCompanies(ZipArchiveEntry entry, List<string> skipped)
+    {
+        try
+        {
+            string text;
+            using (var reader = new StreamReader(entry.Open(), Encoding.UTF8))
+            {
+                text = reader.ReadToEnd();
+            }
+
+            var merged = _companies.Load().ToList();
+            foreach (var company in CompanyStore.Parse(text))
+            {
+                var index = merged.FindIndex(c => c.Id == company.Id);
+                if (index >= 0)
+                {
+                    merged[index] = company;
+                }
+                else
+                {
+                    merged.Add(company);
+                }
+            }
+
+            _companies.Save(merged);
+        }
+        catch (Exception e) when (e is JsonException or IOException or InvalidDataException or UnauthorizedAccessException)
+        {
+            skipped.Add($"{entry.Name}: {e.Message}");
+        }
     }
 
     /// <summary>id do projeto -> arquivo onde ele está hoje.</summary>

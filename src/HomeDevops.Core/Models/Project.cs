@@ -17,6 +17,9 @@ public partial class Project : TrackedObject
 
     public string Id { get; set; } = Guid.NewGuid().ToString();
 
+    /// <summary>Empresa dona do projeto. Nulo em arquivos antigos; o app então usa a empresa padrão.</summary>
+    public string? CompanyId { get; set; }
+
     [ObservableProperty]
     private string _name = "";
 

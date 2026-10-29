@@ -211,25 +211,25 @@
                         Style="{StaticResource PrimaryButton}"
                         Margin="0,0,0,12"
                         HorizontalContentAlignment="Center"
-                        Command="{Binding NewProjectCommand}"
-                        ToolTip="Novo projeto">
+                        Command="{Binding NewCompanyCommand}"
+                        ToolTip="Nova empresa">
                     <StackPanel Orientation="Horizontal">
                         <v:Icon Data="{StaticResource Icon.Plus}" Size="16" />
-                        <TextBlock Text="Novo projeto"
+                        <TextBlock Text="Nova empresa"
                                    Margin="6,0,0,0"
                                    Visibility="{Binding IsSidebarExpanded, Converter={StaticResource BoolToVisible}}" />
                     </StackPanel>
                 </Button>
 
                 <ListBox Grid.Row="2"
-                         ItemsSource="{Binding Projects}"
-                         SelectedItem="{Binding SelectedProject, Mode=TwoWay}"
+                         ItemsSource="{Binding Companies}"
+                         SelectedItem="{Binding SelectedCompany, Mode=TwoWay}"
                          ItemContainerStyle="{StaticResource ProjectListItem}"
                          Background="Transparent"
                          BorderThickness="0"
                          ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                     <ListBox.ItemTemplate>
-                        <DataTemplate DataType="{x:Type m:Project}">
+                        <DataTemplate DataType="{x:Type m:Company}">
                             <Grid ToolTip="{Binding Name}">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />
@@ -268,7 +268,7 @@
                                            VerticalAlignment="Center"
                                            FontSize="12"
                                            Foreground="{DynamicResource MutedBrush}"
-                                           Text="{Binding ItemCount}"
+                                           Text="{Binding ProjectCount}"
                                            Visibility="{Binding DataContext.IsSidebarExpanded, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource BoolToVisible}}" />
                             </Grid>
                         </DataTemplate>
@@ -291,13 +291,77 @@
 
         <!-- ===== Projeto selecionado ===== -->
         <Grid Grid.Column="1" Margin="32,24,32,0">
-            <TextBlock Text="Crie um projeto para começar."
+            <TextBlock Text="Crie uma empresa para começar."
                        Style="{StaticResource MutedText}"
                        HorizontalAlignment="Center"
                        VerticalAlignment="Center"
-                       Visibility="{Binding SelectedProject, Converter={StaticResource NoValueToVisible}}" />
+                       Visibility="{Binding SelectedCompany, Converter={StaticResource NoValueToVisible}}" />
 
-            <Grid Visibility="{Binding SelectedProject, Converter={StaticResource HasValueToVisible}}">
+            <Grid Visibility="{Binding SelectedCompany, Converter={StaticResource HasValueToVisible}}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <!-- empresa -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <StackPanel>
+                        <TextBlock Text="{Binding SelectedCompany.Name}" FontSize="24" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                        <TextBlock Text="{Binding SelectedCompany.Description}"
+                                   Style="{StaticResource MutedText}"
+                                   Margin="0,4,16,0"
+                                   Visibility="{Binding SelectedCompany.Description, Converter={StaticResource HasValueToVisible}}" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
+                        <Button Style="{StaticResource PrimaryButton}" Command="{Binding NewProjectCommand}">
+                            <StackPanel Orientation="Horizontal">
+                                <v:Icon Data="{StaticResource Icon.Plus}" Size="14" />
+                                <TextBlock Text="Projeto" Margin="6,0,0,0" />
+                            </StackPanel>
+                        </Button>
+                        <Button Content="Editar empresa" Margin="8,0,0,0" Command="{Binding EditCompanyCommand}" />
+                        <Button Content="Excluir empresa" Style="{StaticResource GhostButton}" Margin="4,0,0,0" Command="{Binding DeleteCompanyCommand}" />
+                    </StackPanel>
+                </Grid>
+
+                <!-- projetos da empresa -->
+                <ListBox Grid.Row="1"
+                         Margin="0,16,0,0"
+                         ItemsSource="{Binding CompanyProjects}"
+                         SelectedItem="{Binding SelectedProject, Mode=TwoWay}"
+                         ItemContainerStyle="{StaticResource ProjectListItem}"
+                         Background="Transparent"
+                         BorderThickness="0"
+                         ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                         ScrollViewer.HorizontalScrollBarVisibility="Auto">
+                    <ListBox.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ListBox.ItemsPanel>
+                    <ListBox.ItemTemplate>
+                        <DataTemplate DataType="{x:Type m:Project}">
+                            <TextBlock Text="{Binding Name}"
+                                       Margin="6,2"
+                                       MaxWidth="220"
+                                       TextTrimming="CharacterEllipsis" />
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+
+                <TextBlock Grid.Row="2"
+                           Text="Esta empresa ainda não tem projetos."
+                           Style="{StaticResource MutedText}"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"
+                           Visibility="{Binding SelectedProject, Converter={StaticResource NoValueToVisible}}" />
+
+            <Grid Grid.Row="2" Margin="0,16,0,0" Visibility="{Binding SelectedProject, Converter={StaticResource HasValueToVisible}}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="Auto" />
@@ -330,8 +394,8 @@
                                 <TextBlock Text="Bug" Margin="6,0,0,0" />
                             </StackPanel>
                         </Button>
-                        <Button Content="Editar" Margin="8,0,0,0" Command="{Binding EditProjectCommand}" />
-                        <Button Content="Excluir" Style="{StaticResource GhostButton}" Margin="4,0,0,0" Command="{Binding DeleteProjectCommand}" />
+                        <Button Content="Editar projeto" Margin="8,0,0,0" Command="{Binding EditProjectCommand}" />
+                        <Button Content="Excluir projeto" Style="{StaticResource GhostButton}" Margin="4,0,0,0" Command="{Binding DeleteProjectCommand}" />
                     </StackPanel>
                 </Grid>
 
@@ -379,6 +443,7 @@
                                    Visibility="{Binding ItemsView.IsEmpty, Converter={StaticResource BoolToVisible}}" />
                     </StackPanel>
                 </ScrollViewer>
+            </Grid>
             </Grid>
         </Grid>
 

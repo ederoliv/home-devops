@@ -39,8 +39,9 @@ public partial class App : Application
 
         _store = new ProjectStore(projectsFolder, new DispatcherSynchronizationContext(Dispatcher));
         var transfer = new ProjectTransfer(_store);
+        var companies = new CompanyStore(projectsFolder);
 
-        var main = new MainViewModel(_store, transfer, config, theme, new DialogService());
+        var main = new MainViewModel(_store, companies, transfer, config, theme, new DialogService());
         _store.SaveFailed += main.ShowToast;
         main.Load();
 
