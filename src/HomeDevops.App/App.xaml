@@ -1,0 +1,42 @@
+﻿<Application x:Class="HomeDevops.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:conv="clr-namespace:HomeDevops.Converters">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes/Icons.xaml" />
+                <ResourceDictionary Source="Themes/Styles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <!-- Valores iniciais; o ThemeService os troca pelas cores escolhidas em Configurações > Aparência -->
+            <SolidColorBrush x:Key="BgBrush" Color="#14161b" />
+            <SolidColorBrush x:Key="TextBrush" Color="#e6e8ee" />
+            <SolidColorBrush x:Key="AccentBrush" Color="#5b8def" />
+            <SolidColorBrush x:Key="OnAccentBrush" Color="#ffffff" />
+            <SolidColorBrush x:Key="PanelBrush" Color="#1c1f26" />
+            <SolidColorBrush x:Key="Panel2Brush" Color="#232731" />
+            <SolidColorBrush x:Key="LineBrush" Color="#2d323e" />
+            <SolidColorBrush x:Key="MutedBrush" Color="#8b92a3" />
+
+            <!-- Conversores -->
+            <conv:EqualsConverter x:Key="Equals" />
+            <conv:EqualsToVisibilityConverter x:Key="EqualsToVisible" />
+            <conv:BoolToVisibilityConverter x:Key="BoolToVisible" />
+            <conv:BoolToVisibilityConverter x:Key="BoolToCollapsed" Invert="True" />
+            <conv:ZeroToVisibilityConverter x:Key="ZeroToVisible" />
+            <conv:HasValueToVisibilityConverter x:Key="HasValueToVisible" />
+            <conv:HasValueToVisibilityConverter x:Key="NoValueToVisible" Invert="True" />
+            <conv:DataUrlToImageConverter x:Key="DataUrlToImage" />
+            <conv:FirstLetterConverter x:Key="FirstLetter" />
+            <conv:BoolToGridLengthConverter x:Key="BoolToGridLength" />
+            <conv:ItemTypeLabelConverter x:Key="TypeLabel" />
+            <conv:ItemStateLabelConverter x:Key="StateLabel" />
+
+            <!-- Cores semânticas fixas -->
+            <SolidColorBrush x:Key="FeatureBrush" Color="#4cc38a" />
+            <SolidColorBrush x:Key="BugBrush" Color="#ef6b6b" />
+            <SolidColorBrush x:Key="DoingBrush" Color="#e5b94e" />
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

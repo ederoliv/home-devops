@@ -1,0 +1,150 @@
+<Window x:Class="HomeDevops.Views.SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Configurações"
+        Width="720" Height="480"
+        ResizeMode="NoResize"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner"
+        Icon="/Assets/app.ico"
+        Style="{DynamicResource AppWindow}">
+
+    <Window.Resources>
+        <!-- Uma linha de cor: nome, amostra, código hexadecimal e seletor -->
+        <Style x:Key="ColorRow" TargetType="Grid">
+            <Setter Property="Margin" Value="0,0,0,10" />
+        </Style>
+        <Style x:Key="Swatch" TargetType="Border">
+            <Setter Property="Width" Value="30" />
+            <Setter Property="Height" Value="30" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}" />
+            <Setter Property="Margin" Value="0,0,8,0" />
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="210" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Border Background="{DynamicResource PanelBrush}"
+                BorderBrush="{DynamicResource LineBrush}"
+                BorderThickness="0,0,1,0"
+                Padding="12,16">
+            <StackPanel>
+                <TextBlock Text="Configurações" FontSize="16" FontWeight="SemiBold" Margin="10,0,0,14" />
+                <RadioButton Style="{StaticResource NavRadio}" GroupName="section" Content="Aparência"
+                             IsChecked="{Binding Section, Converter={StaticResource Equals}, ConverterParameter=Appearance}" />
+                <RadioButton Style="{StaticResource NavRadio}" GroupName="section" Content="Backup"
+                             IsChecked="{Binding Section, Converter={StaticResource Equals}, ConverterParameter=Backup}" />
+                <RadioButton Style="{StaticResource NavRadio}" GroupName="section" Content="Importar/Exportar"
+                             IsChecked="{Binding Section, Converter={StaticResource Equals}, ConverterParameter=Transfer}" />
+            </StackPanel>
+        </Border>
+
+        <ScrollViewer Grid.Column="1" VerticalScrollBarVisibility="Auto">
+            <Grid Margin="28,22">
+                <!-- ===== Aparência ===== -->
+                <StackPanel Visibility="{Binding Section, Converter={StaticResource EqualsToVisible}, ConverterParameter=Appearance}">
+                    <TextBlock Text="Aparência" Style="{StaticResource SectionTitle}" />
+
+                    <Grid Style="{StaticResource ColorRow}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="100" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Cor de fundo" VerticalAlignment="Center" />
+                        <Border Grid.Column="1" Style="{StaticResource Swatch}" Background="{Binding Bg}" />
+                        <TextBox Grid.Column="2" Text="{Binding Bg, UpdateSourceTrigger=PropertyChanged}" MaxLength="7" />
+                        <Button Grid.Column="3" Content="…" Margin="8,0,0,0" ToolTip="Escolher cor"
+                                Command="{Binding PickColorCommand}" CommandParameter="Bg" />
+                    </Grid>
+
+                    <Grid Style="{StaticResource ColorRow}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="100" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Fonte principal" VerticalAlignment="Center" />
+                        <Border Grid.Column="1" Style="{StaticResource Swatch}" Background="{Binding Text}" />
+                        <TextBox Grid.Column="2" Text="{Binding Text, UpdateSourceTrigger=PropertyChanged}" MaxLength="7" />
+                        <Button Grid.Column="3" Content="…" Margin="8,0,0,0" ToolTip="Escolher cor"
+                                Command="{Binding PickColorCommand}" CommandParameter="Text" />
+                    </Grid>
+
+                    <Grid Style="{StaticResource ColorRow}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="100" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Text="Destaque" VerticalAlignment="Center" />
+                        <Border Grid.Column="1" Style="{StaticResource Swatch}" Background="{Binding Accent}" />
+                        <TextBox Grid.Column="2" Text="{Binding Accent, UpdateSourceTrigger=PropertyChanged}" MaxLength="7" />
+                        <Button Grid.Column="3" Content="…" Margin="8,0,0,0" ToolTip="Escolher cor"
+                                Command="{Binding PickColorCommand}" CommandParameter="Accent" />
+                    </Grid>
+
+                    <TextBlock Text="Digite o código (#rrggbb) ou use “…”. A cor vale assim que o código estiver completo."
+                               Style="{StaticResource MutedText}" FontSize="12" Margin="0,2,0,16" />
+                    <Button Content="Restaurar padrão" HorizontalAlignment="Left" Command="{Binding ResetAppearanceCommand}" />
+                </StackPanel>
+
+                <!-- ===== Backup ===== -->
+                <StackPanel Visibility="{Binding Section, Converter={StaticResource EqualsToVisible}, ConverterParameter=Backup}">
+                    <TextBlock Text="Backup" Style="{StaticResource SectionTitle}" />
+                    <TextBlock Text="Gerar backup cria um arquivo .zip com todos os seus projetos (.hdp)."
+                               Style="{StaticResource MutedText}" Margin="0,0,0,8" />
+                    <Button Content="Gerar backup" HorizontalAlignment="Left" Command="{Binding CreateBackupCommand}" />
+
+                    <TextBlock Text="Importar backup abre um .zip e move os .hdp para a pasta dos projetos; eles aparecem na lista na hora. Um projeto que já existe (mesmo id) é substituído."
+                               Style="{StaticResource MutedText}" Margin="0,22,0,8" />
+                    <Button Content="Importar backup" HorizontalAlignment="Left" Command="{Binding RestoreBackupCommand}" />
+
+                    <TextBlock Style="{StaticResource MutedText}" FontSize="12" Margin="0,28,0,0">
+                        <Run Text="Pasta dos projetos: " /><Run Text="{Binding ProjectsFolder, Mode=OneWay}" />
+                    </TextBlock>
+                </StackPanel>
+
+                <!-- ===== Importar/Exportar ===== -->
+                <StackPanel Visibility="{Binding Section, Converter={StaticResource EqualsToVisible}, ConverterParameter=Transfer}">
+                    <TextBlock Text="Importar/Exportar" Style="{StaticResource SectionTitle}" />
+                    <TextBlock Text="Importar copia um ou mais arquivos .hdp para a pasta dos projetos. Se o projeto já existir, ele entra como uma cópia."
+                               Style="{StaticResource MutedText}" Margin="0,0,0,8" />
+                    <Button Content="Importar projeto…" HorizontalAlignment="Left" Command="{Binding ImportProjectsCommand}" />
+
+                    <TextBlock Text="Exportar copia o projeto escolhido para a pasta de destino que você selecionar."
+                               Style="{StaticResource MutedText}" Margin="0,22,0,8" />
+                    <Grid IsEnabled="{Binding HasProjects}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <ComboBox ItemsSource="{Binding Projects}"
+                                  DisplayMemberPath="Name"
+                                  SelectedItem="{Binding ExportProject, Mode=TwoWay}" />
+                        <Button Grid.Column="1" Content="Exportar…" Margin="8,0,0,0" Command="{Binding ExportSelectedProjectCommand}" />
+                    </Grid>
+
+                    <TextBlock Style="{StaticResource MutedText}" FontSize="12" Margin="0,28,0,0">
+                        <Run Text="Pasta dos projetos: " /><Run Text="{Binding ProjectsFolder, Mode=OneWay}" />
+                    </TextBlock>
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+
+        <Border Grid.Column="1"
+                Style="{StaticResource Toast}"
+                Visibility="{Binding Toast, Converter={StaticResource HasValueToVisible}}">
+            <TextBlock Text="{Binding Toast}" TextWrapping="Wrap" />
+        </Border>
+    </Grid>
+</Window>

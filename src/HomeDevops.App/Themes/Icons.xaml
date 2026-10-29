@@ -1,0 +1,10 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <!-- Ícones do Lucide (https://lucide.dev), grade 24x24, traço de 2. Desenhados por Views/Icon. -->
+    <Geometry x:Key="Icon.Repeat">M0 0m17 2 4 4-4 4 M3 11v-1a4 4 0 0 1 4-4h14 M0 0m7 22-4-4 4-4 M21 13v1a4 4 0 0 1-4 4H3</Geometry>
+    <Geometry x:Key="Icon.Settings">M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915 M9 12a3 3 0 1 0 6 0a3 3 0 1 0 -6 0</Geometry>
+    <Geometry x:Key="Icon.PanelLeftClose">M5 3H19A2 2 0 0 1 21 5V19A2 2 0 0 1 19 21H5A2 2 0 0 1 3 19V5A2 2 0 0 1 5 3Z M9 3v18 M0 0m16 15-3-3 3-3</Geometry>
+    <Geometry x:Key="Icon.PanelLeftOpen">M5 3H19A2 2 0 0 1 21 5V19A2 2 0 0 1 19 21H5A2 2 0 0 1 3 19V5A2 2 0 0 1 5 3Z M9 3v18 M0 0m14 9 3 3-3 3</Geometry>
+    <Geometry x:Key="Icon.Plus">M5 12h14 M12 5v14</Geometry>
+    <Geometry x:Key="Icon.X">M18 6 6 18 M0 0m6 6 12 12</Geometry>
+</ResourceDictionary>

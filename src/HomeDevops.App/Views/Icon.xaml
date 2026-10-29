@@ -1,0 +1,16 @@
+<UserControl x:Class="HomeDevops.Views.Icon"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             IsHitTestVisible="False"
+             Focusable="False">
+    <Viewbox Stretch="Uniform">
+        <Canvas Width="24" Height="24">
+            <Path x:Name="Glyph"
+                  StrokeThickness="2"
+                  StrokeStartLineCap="Round"
+                  StrokeEndLineCap="Round"
+                  StrokeLineJoin="Round"
+                  Stroke="{Binding Foreground, RelativeSource={RelativeSource AncestorType=UserControl}}" />
+        </Canvas>
+    </Viewbox>
+</UserControl>

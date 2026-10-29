@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/HomeDevops.App/HomeDevops.App.csproj" />
+    <Project Path="src/HomeDevops.Core/HomeDevops.Core.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/HomeDevops.Tests/HomeDevops.Tests.csproj" />
+  </Folder>
+</Solution>
