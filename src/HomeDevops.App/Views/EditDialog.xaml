@@ -50,14 +50,21 @@
                   Margin="0,0,0,12"
                   Visibility="{Binding ShowDefaultTask, Converter={StaticResource BoolToVisible}}" />
 
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,6,0,0">
-            <Button Content="Cancelar" IsCancel="True" />
-            <Button Content="Salvar"
-                    IsDefault="True"
-                    Style="{StaticResource PrimaryButton}"
-                    Margin="8,0,0,0"
-                    IsEnabled="{Binding CanSave}"
-                    Click="Save_Click" />
-        </StackPanel>
+        <Grid Margin="0,6,0,0">
+            <Button Content="Excluir"
+                    Style="{StaticResource DangerButton}"
+                    HorizontalAlignment="Left"
+                    Visibility="{Binding ShowDelete, Converter={StaticResource BoolToVisible}}"
+                    Click="Delete_Click" />
+            <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                <Button Content="Cancelar" IsCancel="True" />
+                <Button Content="Salvar"
+                        IsDefault="True"
+                        Style="{StaticResource PrimaryButton}"
+                        Margin="8,0,0,0"
+                        IsEnabled="{Binding CanSave}"
+                        Click="Save_Click" />
+            </StackPanel>
+        </Grid>
     </StackPanel>
 </Window>

@@ -133,7 +133,7 @@ public class ItemRulesTests
         var changes = 0;
         project.Changed += (_, _) => changes++;
 
-        item.IsExpanded = true;
+
         item.NewTaskTitle = "digitando";
         Assert.Equal(0, changes);
 

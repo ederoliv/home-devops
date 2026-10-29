@@ -59,6 +59,13 @@ public partial class MainViewModel : ViewModelBase
     private Project? _selectedProject;
 
     [ObservableProperty]
+    private NavLevel _level = NavLevel.Company;
+
+    /// <summary>Lista de empresas aberta pelo breadcrumb.</summary>
+    [ObservableProperty]
+    private bool _isCompanyMenuOpen;
+
+    [ObservableProperty]
     private ItemFilter _filter = ItemFilter.All;
 
     /// <summary>Itens do projeto selecionado, já filtrados por <see cref="Filter"/>.</summary>
@@ -141,8 +148,7 @@ public partial class MainViewModel : ViewModelBase
         }
 
         SelectedCompany = Companies.FirstOrDefault(c => c.Id == selectedCompanyId) ?? Companies.FirstOrDefault();
-        SelectedProject = CompanyProjects.Cast<Project>().FirstOrDefault(p => p.Id == selectedId)
-            ?? CompanyProjects.Cast<Project>().FirstOrDefault();
+        SelectedProject = CompanyProjects.Cast<Project>().FirstOrDefault(p => p.Id == selectedId);
 
         if (result.Skipped.Count > 0)
         {
@@ -155,10 +161,105 @@ public partial class MainViewModel : ViewModelBase
     partial void OnSelectedCompanyChanged(Company? value)
     {
         CompanyProjects.Refresh();
-        SelectedProject = CompanyProjects.Cast<Project>().FirstOrDefault();
+        SelectedProject = null;
     }
 
-    partial void OnSelectedProjectChanged(Project? value) => RebuildItemsView();
+    partial void OnSelectedProjectChanging(Project? value)
+    {
+        if (SelectedProject is { } previous)
+        {
+            previous.PropertyChanged -= OnProjectPropertyChanged;
+        }
+
+        if (value is not null)
+        {
+            value.PropertyChanged += OnProjectPropertyChanged;
+        }
+    }
+
+    partial void OnSelectedProjectChanged(Project? value)
+    {
+        RebuildItemsView();
+        RefreshLevel();
+    }
+
+    private void OnProjectPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(Project.CurrentItem))
+        {
+            RefreshLevel();
+        }
+    }
+
+    private void RefreshLevel() =>
+        Level = SelectedProject is null ? NavLevel.Company
+            : SelectedProject.CurrentItem is null ? NavLevel.Project
+            : NavLevel.Item;
+
+    // ----- Navegação (breadcrumb e tabelas) -----
+
+    /// <summary>Volta para a lista de projetos da empresa (também serve para trocar de empresa).</summary>
+    [RelayCommand]
+    private void OpenCompany(Company? company)
+    {
+        IsCompanyMenuOpen = false;
+        if (company is null)
+        {
+            return;
+        }
+
+        SelectedCompany = company;
+        SelectedProject = null;
+    }
+
+    [RelayCommand]
+    private void ToggleCompanyMenu() => IsCompanyMenuOpen = !IsCompanyMenuOpen;
+
+    [RelayCommand]
+    private void OpenProject(Project? project)
+    {
+        if (project is not null)
+        {
+            SelectedProject = project;
+        }
+    }
+
+    [RelayCommand]
+    private void OpenItem(Item? item)
+    {
+        if (item is not null && SelectedProject is { } project)
+        {
+            project.CurrentItem = item;
+        }
+    }
+
+    /// <summary>Sai do item e volta para a lista de features/bugs do projeto.</summary>
+    [RelayCommand]
+    private void CloseItem()
+    {
+        if (SelectedProject is { } project)
+        {
+            project.CurrentItem = null;
+        }
+    }
+
+    [RelayCommand]
+    private void SelectTask(TaskItem? task)
+    {
+        if (task is not null && SelectedProject?.CurrentItem is { } item)
+        {
+            item.CurrentTask = task;
+        }
+    }
+
+    [RelayCommand]
+    private void ClearTask()
+    {
+        if (SelectedProject?.CurrentItem is { } item)
+        {
+            item.CurrentTask = null;
+        }
+    }
 
     partial void OnFilterChanged(ItemFilter value) => ItemsView?.Refresh();
 
@@ -241,9 +342,21 @@ public partial class MainViewModel : ViewModelBase
             return;
         }
 
-        var result = _dialogs.Edit(new EditRequest("Editar empresa", "Nome", company.Name, company.Description, company.Image, ShowImage: true));
+        var owned = Projects.Where(p => p.CompanyId == company.Id).ToList();
+        var warning = owned.Count > 0
+            ? $"Isto exclui a empresa e seus {owned.Count} projeto(s), com tudo dentro. Os arquivos .hdp serão apagados."
+            : "Isto exclui a empresa.";
+        var result = _dialogs.Edit(new EditRequest(
+            "Editar empresa", "Nome", company.Name, company.Description, company.Image,
+            ShowImage: true, ShowDelete: true, DeleteKind: "empresa", DeleteWarning: warning));
         if (result is null)
         {
+            return;
+        }
+
+        if (result.Delete)
+        {
+            DeleteCompany(company, owned);
             return;
         }
 
@@ -252,23 +365,8 @@ public partial class MainViewModel : ViewModelBase
         company.Image = result.Image;
     }
 
-    [RelayCommand]
-    private void DeleteCompany()
+    private void DeleteCompany(Company company, List<Project> owned)
     {
-        if (SelectedCompany is not { } company)
-        {
-            return;
-        }
-
-        var owned = Projects.Where(p => p.CompanyId == company.Id).ToList();
-        var warning = owned.Count > 0
-            ? $"Excluir a empresa \"{company.Name}\" e seus {owned.Count} projeto(s), com tudo dentro? Os arquivos .hdp serão apagados."
-            : $"Excluir a empresa \"{company.Name}\"?";
-        if (!_dialogs.Confirm(warning))
-        {
-            return;
-        }
-
         foreach (var project in owned)
         {
             Projects.Remove(project);
@@ -322,9 +420,18 @@ public partial class MainViewModel : ViewModelBase
             return;
         }
 
-        var result = _dialogs.Edit(new EditRequest("Editar projeto", "Nome", project.Name, project.Description, project.Image, ShowImage: true));
+        var result = _dialogs.Edit(new EditRequest(
+            "Editar projeto", "Nome", project.Name, project.Description, project.Image,
+            ShowImage: true, ShowDelete: true, DeleteKind: "projeto",
+            DeleteWarning: "Isto exclui o projeto e tudo dentro dele. O arquivo .hdp será apagado."));
         if (result is null)
         {
+            return;
+        }
+
+        if (result.Delete)
+        {
+            DeleteProject(project);
             return;
         }
 
@@ -333,17 +440,10 @@ public partial class MainViewModel : ViewModelBase
         project.Image = result.Image;
     }
 
-    [RelayCommand]
-    private void DeleteProject()
+    private void DeleteProject(Project project)
     {
-        if (SelectedProject is not { } project
-            || !_dialogs.Confirm($"Excluir o projeto \"{project.Name}\" e tudo dentro dele? O arquivo .hdp será apagado."))
-        {
-            return;
-        }
-
         Projects.Remove(project);
-        SelectedProject = CompanyProjects.Cast<Project>().FirstOrDefault();
+        SelectedProject = null;
         try
         {
             _store.Delete(project);
@@ -374,7 +474,7 @@ public partial class MainViewModel : ViewModelBase
             return;
         }
 
-        var item = new Item { Type = type, Title = result.Name, Description = result.Description, IsExpanded = true };
+        var item = new Item { Type = type, Title = result.Name, Description = result.Description };
         if (result.CreateDefaultTask)
         {
             item.AddTask(result.Name);

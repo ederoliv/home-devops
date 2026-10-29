@@ -8,14 +8,21 @@ public sealed record EditRequest(
     string Description = "",
     string? Image = null,
     bool ShowImage = false,
-    bool ShowDefaultTask = false);
+    bool ShowDefaultTask = false,
+    bool ShowDelete = false,
+    string DeleteKind = "",
+    string DeleteWarning = "");
 
-public sealed record EditResult(string Name, string Description, string? Image, bool CreateDefaultTask);
+/// <param name="Delete">O usuário pediu para excluir (e já confirmou digitando o nome); os demais campos não valem.</param>
+public sealed record EditResult(string Name, string Description, string? Image, bool CreateDefaultTask, bool Delete = false);
 
 /// <summary>Tudo o que os view models precisam pedir à interface (janelas, seletores de arquivo...).</summary>
 public interface IDialogService
 {
     bool Confirm(string message);
+
+    /// <summary>Só confirma se o usuário digitar <paramref name="name"/>. <paramref name="kind"/>: "empresa", "projeto"...</summary>
+    bool ConfirmDelete(string kind, string name, string warning);
 
     EditResult? Edit(EditRequest request);
 

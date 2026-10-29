@@ -35,6 +35,11 @@ public partial class Project : TrackedObject
     [JsonObjectCreationHandling(JsonObjectCreationHandling.Populate)]
     public ObservableCollection<Item> Items { get; } = [];
 
+    /// <summary>Item aberto na tela (nível de tarefas); aparece no breadcrumb. Estado só de tela.</summary>
+    [ObservableProperty]
+    [property: JsonIgnore]
+    private Item? _currentItem;
+
     /// <summary>Nome do arquivo .hdp onde o projeto está salvo (controlado pelo <c>ProjectStore</c>).</summary>
     [JsonIgnore]
     public string? FileName { get; set; }
@@ -54,6 +59,15 @@ public partial class Project : TrackedObject
     [JsonIgnore]
     public int BugsTotal => Items.Count(i => i.Type == ItemType.Bug);
 
+    /// <summary>Ao sair de um item, a tarefa em foco dele deixa de valer.</summary>
+    partial void OnCurrentItemChanging(Item? value)
+    {
+        if (CurrentItem is { } previous)
+        {
+            previous.CurrentTask = null;
+        }
+    }
+
     partial void OnNameChanged(string value) => RaiseChanged();
 
     partial void OnDescriptionChanged(string value) => RaiseChanged();
@@ -65,6 +79,10 @@ public partial class Project : TrackedObject
         foreach (Item item in e.OldItems ?? Array.Empty<Item>())
         {
             item.Changed -= OnItemChanged;
+            if (item == CurrentItem)
+            {
+                CurrentItem = null;
+            }
         }
 
         foreach (Item item in e.NewItems ?? Array.Empty<Item>())

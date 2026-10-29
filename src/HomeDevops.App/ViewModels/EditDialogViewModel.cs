@@ -6,6 +6,10 @@ namespace HomeDevops.ViewModels;
 public partial class EditDialogViewModel : ObservableObject
 {
     private readonly IDialogService _dialogs;
+    private readonly string _deleteKind;
+    private readonly string _deleteWarning;
+    private readonly string _originalName;
+    private bool _deleteRequested;
 
     public EditDialogViewModel(EditRequest request, IDialogService dialogs)
     {
@@ -14,6 +18,10 @@ public partial class EditDialogViewModel : ObservableObject
         NameLabel = request.NameLabel;
         ShowImage = request.ShowImage;
         ShowDefaultTask = request.ShowDefaultTask;
+        ShowDelete = request.ShowDelete;
+        _deleteKind = request.DeleteKind;
+        _deleteWarning = request.DeleteWarning;
+        _originalName = request.Name;
         _name = request.Name;
         _description = request.Description;
         _image = request.Image;
@@ -26,6 +34,8 @@ public partial class EditDialogViewModel : ObservableObject
     public bool ShowImage { get; }
 
     public bool ShowDefaultTask { get; }
+
+    public bool ShowDelete { get; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanSave))]
@@ -43,7 +53,15 @@ public partial class EditDialogViewModel : ObservableObject
 
     public bool CanSave => !string.IsNullOrWhiteSpace(Name);
 
-    public EditResult ToResult() => new(Name.Trim(), Description.Trim(), Image, ShowDefaultTask && CreateDefaultTask);
+    public EditResult ToResult() =>
+        new(Name.Trim(), Description.Trim(), Image, ShowDefaultTask && CreateDefaultTask, _deleteRequested);
+
+    /// <summary>Pede a confirmação (digitar o nome original). Se confirmada, o resultado passa a ser "excluir".</summary>
+    public bool RequestDelete()
+    {
+        _deleteRequested = _dialogs.ConfirmDelete(_deleteKind, _originalName, _deleteWarning);
+        return _deleteRequested;
+    }
 
     [RelayCommand]
     private void ChooseImage()

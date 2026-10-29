@@ -62,6 +62,12 @@
         <Setter Property="Foreground" Value="{DynamicResource OnAccentBrush}" />
     </Style>
 
+    <Style x:Key="DangerButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+        <Setter Property="Background" Value="{DynamicResource BugBrush}" />
+        <Setter Property="BorderBrush" Value="{DynamicResource BugBrush}" />
+        <Setter Property="Foreground" Value="White" />
+    </Style>
+
     <Style x:Key="GhostButton" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
         <Setter Property="Background" Value="Transparent" />
         <Setter Property="BorderBrush" Value="Transparent" />

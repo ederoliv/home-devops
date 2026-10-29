@@ -38,14 +38,14 @@ public partial class Item : TrackedObject
     [JsonIgnore]
     public int DoneCount => Tasks.Count(t => t.Done);
 
-    // estado só de tela, não vai para o arquivo
-    [ObservableProperty]
-    [property: JsonIgnore]
-    private bool _isExpanded;
-
     [ObservableProperty]
     [property: JsonIgnore]
     private string _newTaskTitle = "";
+
+    /// <summary>Última tarefa mexida (criada ou marcada); aparece no breadcrumb. Zera ao sair do item.</summary>
+    [ObservableProperty]
+    [property: JsonIgnore]
+    private TaskItem? _currentTask;
 
     partial void OnTitleChanged(string value) => RaiseChanged();
 
@@ -57,6 +57,7 @@ public partial class Item : TrackedObject
     {
         var task = new TaskItem { Title = title };
         Tasks.Add(task);
+        CurrentTask = task;
         if (State == ItemState.Done)
         {
             State = ItemState.Doing;
@@ -88,15 +89,16 @@ public partial class Item : TrackedObject
         NewTaskTitle = "";
     }
 
-    [RelayCommand]
-    private void ToggleExpanded() => IsExpanded = !IsExpanded;
-
     private void OnTasksCollectionChanged(object? sender, NotifyCollectionChangedEventArgs e)
     {
         foreach (TaskItem task in e.OldItems ?? Array.Empty<TaskItem>())
         {
             task.Changed -= OnTaskChanged;
             task.DoneToggled -= OnTaskDoneToggled;
+            if (task == CurrentTask)
+            {
+                CurrentTask = null;
+            }
         }
 
         foreach (TaskItem task in e.NewItems ?? Array.Empty<TaskItem>())
@@ -117,6 +119,7 @@ public partial class Item : TrackedObject
     /// </summary>
     private void OnTaskDoneToggled(TaskItem task)
     {
+        CurrentTask = task;
         if (Tasks.All(t => t.Done))
         {
             State = ItemState.Done;

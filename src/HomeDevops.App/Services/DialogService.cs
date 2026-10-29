@@ -21,6 +21,9 @@ public sealed class DialogService : IDialogService
         return result == MessageBoxResult.Yes;
     }
 
+    public bool ConfirmDelete(string kind, string name, string warning) =>
+        new ConfirmDeleteDialog { DataContext = new ConfirmDeleteViewModel(kind, name, warning), Owner = Owner }.ShowDialog() == true;
+
     public EditResult? Edit(EditRequest request)
     {
         var viewModel = new EditDialogViewModel(request, this);

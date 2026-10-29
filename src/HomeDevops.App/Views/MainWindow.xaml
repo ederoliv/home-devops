@@ -1,4 +1,5 @@
 <Window x:Class="HomeDevops.Views.MainWindow"
+        x:Name="Root"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:v="clr-namespace:HomeDevops.Views"
@@ -6,20 +7,189 @@
         xmlns:m="clr-namespace:HomeDevops.Models;assembly=HomeDevops.Core"
         Title="Home DevOps"
         Width="1100" Height="720" MinWidth="800" MinHeight="500"
+        WindowState="Maximized"
         WindowStartupLocation="CenterScreen"
         Icon="/Assets/app.ico"
         Style="{DynamicResource AppWindow}">
 
     <Window.Resources>
-        <!-- Tarefa: caixa de seleção + título (riscado quando feita) + remover -->
-        <DataTemplate x:Key="TaskTemplate" DataType="{x:Type m:TaskItem}">
-            <Grid Margin="0,3">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <CheckBox IsChecked="{Binding Done}">
-                    <TextBlock Text="{Binding Title}" TextWrapping="Wrap">
+        <Style x:Key="StatCard" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource PanelBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Padding" Value="16,10" />
+            <Setter Property="MinWidth" Value="130" />
+            <Setter Property="Margin" Value="0,0,12,0" />
+        </Style>
+
+        <!-- ===== Tabelas ===== -->
+        <Style x:Key="TableFrame" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource PanelBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Margin" Value="0,0,0,24" />
+        </Style>
+
+        <Style x:Key="TableHead" TargetType="Border">
+            <Setter Property="Background" Value="{DynamicResource Panel2Brush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+            <Setter Property="Padding" Value="12,8" />
+        </Style>
+
+        <Style x:Key="TableHeadText" TargetType="TextBlock" BasedOn="{StaticResource MutedText}">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+        </Style>
+
+        <Style x:Key="TableRow" TargetType="Border">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}" />
+            <Setter Property="BorderThickness" Value="0,0,0,1" />
+            <Setter Property="Padding" Value="12,10" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="{DynamicResource Panel2Brush}" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+
+        <!-- Linha da tabela de projetos -->
+        <DataTemplate x:Key="ProjectRow" DataType="{x:Type m:Project}">
+            <Border Style="{StaticResource TableRow}">
+                <Border.InputBindings>
+                    <MouseBinding Gesture="LeftClick"
+                                  Command="{Binding DataContext.OpenProjectCommand, ElementName=Root}"
+                                  CommandParameter="{Binding}" />
+                </Border.InputBindings>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="130" />
+                        <ColumnDefinition Width="130" />
+                        <ColumnDefinition Width="110" />
+                    </Grid.ColumnDefinitions>
+
+                    <Grid VerticalAlignment="Center">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
+                            <ColumnDefinition Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid Width="32" Height="32">
+                            <Border Background="{DynamicResource Panel2Brush}"
+                                    BorderBrush="{DynamicResource LineBrush}"
+                                    BorderThickness="1"
+                                    Visibility="{Binding Image, Converter={StaticResource NoValueToVisible}}">
+                                <TextBlock Text="{Binding Name, Converter={StaticResource FirstLetter}}"
+                                           HorizontalAlignment="Center"
+                                           VerticalAlignment="Center"
+                                           FontWeight="SemiBold"
+                                           Foreground="{DynamicResource AccentBrush}" />
+                            </Border>
+                            <Rectangle Visibility="{Binding Image, Converter={StaticResource HasValueToVisible}}">
+                                <Rectangle.Fill>
+                                    <ImageBrush ImageSource="{Binding Image, Converter={StaticResource DataUrlToImage}}"
+                                                Stretch="UniformToFill" />
+                                </Rectangle.Fill>
+                            </Rectangle>
+                        </Grid>
+                        <StackPanel Grid.Column="1" Margin="12,0" VerticalAlignment="Center">
+                            <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                            <TextBlock Text="{Binding Description}"
+                                       Style="{StaticResource MutedText}"
+                                       FontSize="12"
+                                       TextTrimming="CharacterEllipsis"
+                                       Visibility="{Binding Description, Converter={StaticResource HasValueToVisible}}" />
+                        </StackPanel>
+                    </Grid>
+
+                    <TextBlock Grid.Column="1" VerticalAlignment="Center">
+                        <Run Text="{Binding FeaturesDone, Mode=OneWay}" /><Run Text="/" /><Run Text="{Binding FeaturesTotal, Mode=OneWay}" />
+                    </TextBlock>
+                    <TextBlock Grid.Column="2" VerticalAlignment="Center">
+                        <Run Text="{Binding BugsDone, Mode=OneWay}" /><Run Text="/" /><Run Text="{Binding BugsTotal, Mode=OneWay}" />
+                    </TextBlock>
+                    <TextBlock Grid.Column="3"
+                               VerticalAlignment="Center"
+                               Style="{StaticResource MutedText}"
+                               Text="{Binding CreatedAt, StringFormat='{}{0:dd/MM/yyyy}'}" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <!-- Linha da tabela de features e bugs -->
+        <DataTemplate x:Key="ItemRow" DataType="{x:Type m:Item}">
+            <Border Style="{StaticResource TableRow}">
+                <Border.InputBindings>
+                    <MouseBinding Gesture="LeftClick"
+                                  Command="{Binding DataContext.OpenItemCommand, ElementName=Root}"
+                                  CommandParameter="{Binding}" />
+                </Border.InputBindings>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="90" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="100" />
+                        <ColumnDefinition Width="130" />
+                        <ColumnDefinition Width="110" />
+                    </Grid.ColumnDefinitions>
+                    <ContentControl Style="{StaticResource TypeBadge}"
+                                    Content="{Binding Type, Converter={StaticResource TypeLabel}}"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="1"
+                               Margin="0,0,12,0"
+                               VerticalAlignment="Center"
+                               FontWeight="SemiBold"
+                               TextTrimming="CharacterEllipsis"
+                               Text="{Binding Title}">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding State}" Value="Done">
+                                        <Setter Property="TextDecorations" Value="Strikethrough" />
+                                        <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <TextBlock Grid.Column="2" VerticalAlignment="Center">
+                        <Run Text="{Binding DoneCount, Mode=OneWay}" /><Run Text="/" /><Run Text="{Binding TaskCount, Mode=OneWay}" />
+                    </TextBlock>
+                    <ContentControl Grid.Column="3"
+                                    Style="{StaticResource StateBadge}"
+                                    Content="{Binding State, Converter={StaticResource StateLabel}}"
+                                    HorizontalAlignment="Left"
+                                    VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="4"
+                               VerticalAlignment="Center"
+                               Style="{StaticResource MutedText}"
+                               Text="{Binding CreatedAt, StringFormat='{}{0:dd/MM/yyyy}'}" />
+                </Grid>
+            </Border>
+        </DataTemplate>
+
+        <!-- Linha da tabela de tarefas -->
+        <DataTemplate x:Key="TaskRow" DataType="{x:Type m:TaskItem}">
+            <Border Style="{StaticResource TableRow}" Padding="12,6" Cursor="Arrow">
+                <Border.InputBindings>
+                    <MouseBinding Gesture="LeftClick"
+                                  Command="{Binding DataContext.SelectTaskCommand, ElementName=Root}"
+                                  CommandParameter="{Binding}" />
+                </Border.InputBindings>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="60" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="50" />
+                    </Grid.ColumnDefinitions>
+                    <CheckBox IsChecked="{Binding Done}" VerticalAlignment="Center" />
+                    <TextBlock Grid.Column="1"
+                               VerticalAlignment="Center"
+                               TextWrapping="Wrap"
+                               Text="{Binding Title}">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
                                 <Style.Triggers>
@@ -31,140 +201,17 @@
                             </Style>
                         </TextBlock.Style>
                     </TextBlock>
-                </CheckBox>
-                <Button Grid.Column="1"
-                        Style="{StaticResource GhostButton}"
-                        ToolTip="Remover tarefa"
-                        Command="{Binding DataContext.RemoveTaskCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                        CommandParameter="{Binding}">
-                    <v:Icon Data="{StaticResource Icon.X}" Size="14" />
-                </Button>
-            </Grid>
-        </DataTemplate>
-
-        <!-- Cartão de feature/bug -->
-        <DataTemplate x:Key="ItemCard" DataType="{x:Type m:Item}">
-            <Border Background="{DynamicResource PanelBrush}"
-                    BorderBrush="{DynamicResource LineBrush}"
-                    BorderThickness="1"
-                    Margin="0,0,0,10">
-                <StackPanel>
-                    <Border Background="Transparent" Padding="14,10" Cursor="Hand">
-                        <Border.InputBindings>
-                            <MouseBinding Gesture="LeftClick" Command="{Binding ToggleExpandedCommand}" />
-                        </Border.InputBindings>
-                        <Grid>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="Auto" />
-                                <ColumnDefinition Width="Auto" />
-                            </Grid.ColumnDefinitions>
-                            <ContentControl Style="{StaticResource TypeBadge}"
-                                            Content="{Binding Type, Converter={StaticResource TypeLabel}}"
-                                            VerticalAlignment="Center" />
-                            <TextBlock Grid.Column="1"
-                                       Margin="10,0"
-                                       VerticalAlignment="Center"
-                                       FontWeight="SemiBold"
-                                       TextTrimming="CharacterEllipsis"
-                                       Text="{Binding Title}">
-                                <TextBlock.Style>
-                                    <Style TargetType="TextBlock">
-                                        <Style.Triggers>
-                                            <DataTrigger Binding="{Binding State}" Value="Done">
-                                                <Setter Property="TextDecorations" Value="Strikethrough" />
-                                                <Setter Property="Foreground" Value="{DynamicResource MutedBrush}" />
-                                            </DataTrigger>
-                                        </Style.Triggers>
-                                    </Style>
-                                </TextBlock.Style>
-                            </TextBlock>
-                            <TextBlock Grid.Column="2"
-                                       Margin="0,0,10,0"
-                                       VerticalAlignment="Center"
-                                       FontSize="12"
-                                       Foreground="{DynamicResource MutedBrush}">
-                                <Run Text="{Binding DoneCount, Mode=OneWay}" /><Run Text="/" /><Run Text="{Binding TaskCount, Mode=OneWay}" />
-                            </TextBlock>
-                            <ContentControl Grid.Column="3"
-                                            Style="{StaticResource StateBadge}"
-                                            Content="{Binding State, Converter={StaticResource StateLabel}}"
-                                            VerticalAlignment="Center" />
-                        </Grid>
-                    </Border>
-
-                    <Border BorderBrush="{DynamicResource LineBrush}"
-                            BorderThickness="0,1,0,0"
-                            Padding="14,12"
-                            Visibility="{Binding IsExpanded, Converter={StaticResource BoolToVisible}}">
-                        <StackPanel>
-                            <TextBlock Text="{Binding Description}"
-                                       Style="{StaticResource MutedText}"
-                                       Margin="0,0,0,10"
-                                       Visibility="{Binding Description, Converter={StaticResource HasValueToVisible}}" />
-
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                <ComboBox Width="170"
-                                          ItemsSource="{x:Static vm:ItemStateOptions.All}"
-                                          SelectedValuePath="Value"
-                                          DisplayMemberPath="Label"
-                                          SelectedValue="{Binding State, Mode=TwoWay}" />
-                                <Button Content="Editar"
-                                        Margin="8,0,0,0"
-                                        Command="{Binding DataContext.EditItemCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                        CommandParameter="{Binding}" />
-                                <Button Content="Excluir"
-                                        Style="{StaticResource GhostButton}"
-                                        Margin="4,0,0,0"
-                                        Command="{Binding DataContext.DeleteItemCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                        CommandParameter="{Binding}" />
-                            </StackPanel>
-
-                            <ItemsControl ItemsSource="{Binding Tasks}" ItemTemplate="{StaticResource TaskTemplate}" />
-                            <TextBlock Text="Sem tarefas"
-                                       Style="{StaticResource MutedText}"
-                                       FontSize="12"
-                                       Margin="0,0,0,4"
-                                       Visibility="{Binding TaskCount, Converter={StaticResource ZeroToVisible}}" />
-
-                            <Grid Margin="0,8,0,0">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-                                <Grid>
-                                    <TextBox Text="{Binding NewTaskTitle, UpdateSourceTrigger=PropertyChanged}">
-                                        <TextBox.InputBindings>
-                                            <KeyBinding Key="Return" Command="{Binding SubmitTaskCommand}" />
-                                        </TextBox.InputBindings>
-                                    </TextBox>
-                                    <TextBlock Text="Nova tarefa… (Enter)"
-                                               Margin="10,0"
-                                               VerticalAlignment="Center"
-                                               IsHitTestVisible="False"
-                                               Foreground="{DynamicResource MutedBrush}"
-                                               Visibility="{Binding NewTaskTitle, Converter={StaticResource NoValueToVisible}}" />
-                                </Grid>
-                                <Button Grid.Column="1"
-                                        Content="Adicionar"
-                                        Margin="8,0,0,0"
-                                        Command="{Binding SubmitTaskCommand}" />
-                            </Grid>
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
+                    <Button Grid.Column="2"
+                            Style="{StaticResource GhostButton}"
+                            ToolTip="Remover tarefa"
+                            HorizontalAlignment="Right"
+                            Command="{Binding DataContext.RemoveTaskCommand, ElementName=ItemPage}"
+                            CommandParameter="{Binding}">
+                        <v:Icon Data="{StaticResource Icon.X}" Size="14" />
+                    </Button>
+                </Grid>
             </Border>
         </DataTemplate>
-
-        <Style x:Key="StatCard" TargetType="Border">
-            <Setter Property="Background" Value="{DynamicResource PanelBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource LineBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Padding" Value="16,10" />
-            <Setter Property="MinWidth" Value="130" />
-            <Setter Property="Margin" Value="0,0,12,0" />
-        </Style>
     </Window.Resources>
 
     <Grid>
@@ -289,7 +336,7 @@
             </Grid>
         </Border>
 
-        <!-- ===== Projeto selecionado ===== -->
+        <!-- ===== Conteúdo ===== -->
         <Grid Grid.Column="1" Margin="32,24,32,0">
             <TextBlock Text="Crie uma empresa para começar."
                        Style="{StaticResource MutedText}"
@@ -300,150 +347,333 @@
             <Grid Visibility="{Binding SelectedCompany, Converter={StaticResource HasValueToVisible}}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
                 </Grid.RowDefinitions>
 
-                <!-- empresa -->
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <StackPanel>
-                        <TextBlock Text="{Binding SelectedCompany.Name}" FontSize="24" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-                        <TextBlock Text="{Binding SelectedCompany.Description}"
-                                   Style="{StaticResource MutedText}"
-                                   Margin="0,4,16,0"
-                                   Visibility="{Binding SelectedCompany.Description, Converter={StaticResource HasValueToVisible}}" />
-                    </StackPanel>
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
-                        <Button Style="{StaticResource PrimaryButton}" Command="{Binding NewProjectCommand}">
+                <!-- breadcrumb: Empresa ▾ › Projeto › Feature/Bug: título › Tarefa -->
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,16">
+                    <Grid>
+                        <Button Style="{StaticResource QuietButton}" Padding="4,2" Command="{Binding ToggleCompanyMenuCommand}">
                             <StackPanel Orientation="Horizontal">
-                                <v:Icon Data="{StaticResource Icon.Plus}" Size="14" />
-                                <TextBlock Text="Projeto" Margin="6,0,0,0" />
+                                <TextBlock Text="{Binding SelectedCompany.Name}" MaxWidth="240" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="▾" Style="{StaticResource MutedText}" Margin="6,0,0,0" />
                             </StackPanel>
                         </Button>
-                        <Button Content="Editar empresa" Margin="8,0,0,0" Command="{Binding EditCompanyCommand}" />
-                        <Button Content="Excluir empresa" Style="{StaticResource GhostButton}" Margin="4,0,0,0" Command="{Binding DeleteCompanyCommand}" />
-                    </StackPanel>
-                </Grid>
-
-                <!-- projetos da empresa -->
-                <ListBox Grid.Row="1"
-                         Margin="0,16,0,0"
-                         ItemsSource="{Binding CompanyProjects}"
-                         SelectedItem="{Binding SelectedProject, Mode=TwoWay}"
-                         ItemContainerStyle="{StaticResource ProjectListItem}"
-                         Background="Transparent"
-                         BorderThickness="0"
-                         ScrollViewer.VerticalScrollBarVisibility="Disabled"
-                         ScrollViewer.HorizontalScrollBarVisibility="Auto">
-                    <ListBox.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <StackPanel Orientation="Horizontal" />
-                        </ItemsPanelTemplate>
-                    </ListBox.ItemsPanel>
-                    <ListBox.ItemTemplate>
-                        <DataTemplate DataType="{x:Type m:Project}">
-                            <TextBlock Text="{Binding Name}"
-                                       Margin="6,2"
-                                       MaxWidth="220"
-                                       TextTrimming="CharacterEllipsis" />
-                        </DataTemplate>
-                    </ListBox.ItemTemplate>
-                </ListBox>
-
-                <TextBlock Grid.Row="2"
-                           Text="Esta empresa ainda não tem projetos."
-                           Style="{StaticResource MutedText}"
-                           HorizontalAlignment="Center"
-                           VerticalAlignment="Center"
-                           Visibility="{Binding SelectedProject, Converter={StaticResource NoValueToVisible}}" />
-
-            <Grid Grid.Row="2" Margin="0,16,0,0" Visibility="{Binding SelectedProject, Converter={StaticResource HasValueToVisible}}">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
-                </Grid.RowDefinitions>
-
-                <Grid>
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="*" />
-                        <ColumnDefinition Width="Auto" />
-                    </Grid.ColumnDefinitions>
-                    <StackPanel>
-                        <TextBlock Text="{Binding SelectedProject.Name}" FontSize="24" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
-                        <TextBlock Text="{Binding SelectedProject.Description}"
-                                   Style="{StaticResource MutedText}"
-                                   Margin="0,4,16,0"
-                                   Visibility="{Binding SelectedProject.Description, Converter={StaticResource HasValueToVisible}}" />
-                    </StackPanel>
-                    <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
-                        <Button Style="{StaticResource PrimaryButton}" Command="{Binding NewFeatureCommand}">
-                            <StackPanel Orientation="Horizontal">
-                                <v:Icon Data="{StaticResource Icon.Plus}" Size="14" />
-                                <TextBlock Text="Feature" Margin="6,0,0,0" />
-                            </StackPanel>
+                        <Popup IsOpen="{Binding IsCompanyMenuOpen, Mode=TwoWay}"
+                               StaysOpen="False"
+                               Placement="Bottom"
+                               AllowsTransparency="False">
+                            <Border Background="{DynamicResource PanelBrush}"
+                                    BorderBrush="{DynamicResource LineBrush}"
+                                    BorderThickness="1"
+                                    MinWidth="220"
+                                    MaxHeight="320"
+                                    Padding="4">
+                                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                    <ItemsControl ItemsSource="{Binding Companies}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="{x:Type m:Company}">
+                                                <Button Style="{StaticResource QuietButton}"
+                                                        HorizontalContentAlignment="Left"
+                                                        Padding="10,6"
+                                                        Command="{Binding DataContext.OpenCompanyCommand, ElementName=Root}"
+                                                        CommandParameter="{Binding}">
+                                                    <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" />
+                                                </Button>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </ScrollViewer>
+                            </Border>
+                        </Popup>
+                    </Grid>
+                    <StackPanel Orientation="Horizontal"
+                                Visibility="{Binding SelectedProject, Converter={StaticResource HasValueToVisible}, FallbackValue=Collapsed}">
+                        <TextBlock Text="›" Style="{StaticResource MutedText}" Margin="6,0" VerticalAlignment="Center" />
+                        <Button Style="{StaticResource QuietButton}" Padding="4,2" Command="{Binding CloseItemCommand}">
+                            <TextBlock Text="{Binding SelectedProject.Name}" MaxWidth="240" TextTrimming="CharacterEllipsis" />
                         </Button>
-                        <Button Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" Command="{Binding NewBugCommand}">
-                            <StackPanel Orientation="Horizontal">
-                                <v:Icon Data="{StaticResource Icon.Plus}" Size="14" />
-                                <TextBlock Text="Bug" Margin="6,0,0,0" />
-                            </StackPanel>
-                        </Button>
-                        <Button Content="Editar projeto" Margin="8,0,0,0" Command="{Binding EditProjectCommand}" />
-                        <Button Content="Excluir projeto" Style="{StaticResource GhostButton}" Margin="4,0,0,0" Command="{Binding DeleteProjectCommand}" />
                     </StackPanel>
-                </Grid>
-
-                <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,16">
-                    <Border Style="{StaticResource StatCard}">
-                        <StackPanel>
-                            <TextBlock Text="{Binding SelectedProject.FeaturesDone}" FontSize="20" FontWeight="SemiBold" />
-                            <TextBlock Text="Features desenvolvidas" Style="{StaticResource MutedText}" FontSize="12" />
-                        </StackPanel>
-                    </Border>
-                    <Border Style="{StaticResource StatCard}">
-                        <StackPanel>
-                            <TextBlock Text="{Binding SelectedProject.FeaturesTotal}" FontSize="20" FontWeight="SemiBold" />
-                            <TextBlock Text="Features no total" Style="{StaticResource MutedText}" FontSize="12" />
-                        </StackPanel>
-                    </Border>
-                    <Border Style="{StaticResource StatCard}">
-                        <StackPanel>
-                            <TextBlock FontSize="20" FontWeight="SemiBold">
-                                <Run Text="{Binding SelectedProject.BugsDone, Mode=OneWay}" /><Run Text="/" /><Run Text="{Binding SelectedProject.BugsTotal, Mode=OneWay}" />
+                    <StackPanel Orientation="Horizontal"
+                                Visibility="{Binding SelectedProject.CurrentItem, Converter={StaticResource HasValueToVisible}, FallbackValue=Collapsed}">
+                        <TextBlock Text="›" Style="{StaticResource MutedText}" Margin="6,0" VerticalAlignment="Center" />
+                        <Button Style="{StaticResource QuietButton}" Padding="4,2" Command="{Binding ClearTaskCommand}">
+                            <TextBlock MaxWidth="360" TextTrimming="CharacterEllipsis">
+                                <Run Text="{Binding SelectedProject.CurrentItem.Type, Converter={StaticResource TypeLabel}, Mode=OneWay}" /><Run Text=": " /><Run Text="{Binding SelectedProject.CurrentItem.Title, Mode=OneWay}" />
                             </TextBlock>
-                            <TextBlock Text="Bugs resolvidos" Style="{StaticResource MutedText}" FontSize="12" />
-                        </StackPanel>
-                    </Border>
-                </StackPanel>
-
-                <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,12">
-                    <RadioButton Style="{StaticResource FilterRadio}" GroupName="filter" Content="Todos"
-                                 IsChecked="{Binding Filter, Converter={StaticResource Equals}, ConverterParameter=All}" />
-                    <RadioButton Style="{StaticResource FilterRadio}" GroupName="filter" Content="Features"
-                                 IsChecked="{Binding Filter, Converter={StaticResource Equals}, ConverterParameter=Feature}" />
-                    <RadioButton Style="{StaticResource FilterRadio}" GroupName="filter" Content="Bugs"
-                                 IsChecked="{Binding Filter, Converter={StaticResource Equals}, ConverterParameter=Bug}" />
-                    <RadioButton Style="{StaticResource FilterRadio}" GroupName="filter" Content="Concluídos"
-                                 IsChecked="{Binding Filter, Converter={StaticResource Equals}, ConverterParameter=Done}" />
-                </StackPanel>
-
-                <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto">
-                    <StackPanel>
-                        <ItemsControl ItemsSource="{Binding ItemsView}" ItemTemplate="{StaticResource ItemCard}" />
-                        <TextBlock Text="Nada por aqui."
-                                   Style="{StaticResource MutedText}"
-                                   HorizontalAlignment="Center"
-                                   Margin="0,40"
-                                   Visibility="{Binding ItemsView.IsEmpty, Converter={StaticResource BoolToVisible}}" />
+                        </Button>
                     </StackPanel>
-                </ScrollViewer>
-            </Grid>
+                    <StackPanel Orientation="Horizontal"
+                                Visibility="{Binding SelectedProject.CurrentItem.CurrentTask, Converter={StaticResource HasValueToVisible}, FallbackValue=Collapsed}">
+                        <TextBlock Text="›" Style="{StaticResource MutedText}" Margin="6,0" VerticalAlignment="Center" />
+                        <TextBlock Text="{Binding SelectedProject.CurrentItem.CurrentTask.Title}"
+                                   MaxWidth="360"
+                                   TextTrimming="CharacterEllipsis"
+                                   VerticalAlignment="Center" />
+                    </StackPanel>
+                </StackPanel>
+
+                <Grid Grid.Row="1">
+                    <!-- ===== Nível 1: projetos da empresa (tabela) ===== -->
+                    <Grid Visibility="{Binding Level, Converter={StaticResource EqualsToVisible}, ConverterParameter=Company}">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <Grid Margin="0,0,0,16">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="{Binding SelectedCompany.Name}" FontSize="24" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{Binding SelectedCompany.Description}"
+                                           Style="{StaticResource MutedText}"
+                                           Margin="0,4,16,0"
+                                           Visibility="{Binding SelectedCompany.Description, Converter={StaticResource HasValueToVisible}}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
+                                <Button Style="{StaticResource PrimaryButton}" Command="{Binding NewProjectCommand}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <v:Icon Data="{StaticResource Icon.Plus}" Size="14" />
+                                        <TextBlock Text="Projeto" Margin="6,0,0,0" />
+                                    </StackPanel>
+                                </Button>
+                                <Button Content="Editar empresa" Margin="8,0,0,0" Command="{Binding EditCompanyCommand}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                            <Border Style="{StaticResource TableFrame}" VerticalAlignment="Top">
+                                <StackPanel>
+                                    <Border Style="{StaticResource TableHead}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="130" />
+                                                <ColumnDefinition Width="130" />
+                                                <ColumnDefinition Width="110" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Projeto" Style="{StaticResource TableHeadText}" />
+                                            <TextBlock Grid.Column="1" Text="Features" Style="{StaticResource TableHeadText}" />
+                                            <TextBlock Grid.Column="2" Text="Bugs resolvidos" Style="{StaticResource TableHeadText}" />
+                                            <TextBlock Grid.Column="3" Text="Criado em" Style="{StaticResource TableHeadText}" />
+                                        </Grid>
+                                    </Border>
+                                    <ItemsControl ItemsSource="{Binding CompanyProjects}" ItemTemplate="{StaticResource ProjectRow}" />
+                                    <TextBlock Text="Esta empresa ainda não tem projetos."
+                                               Style="{StaticResource MutedText}"
+                                               HorizontalAlignment="Center"
+                                               Margin="0,32"
+                                               Visibility="{Binding SelectedCompany.ProjectCount, Converter={StaticResource ZeroToVisible}}" />
+                                </StackPanel>
+                            </Border>
+                        </ScrollViewer>
+                    </Grid>
+
+                    <!-- ===== Nível 2: features e bugs do projeto (tabela) ===== -->
+                    <Grid Visibility="{Binding Level, Converter={StaticResource EqualsToVisible}, ConverterParameter=Project}">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                        </Grid.RowDefinitions>
+
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="{Binding SelectedProject.Name}" FontSize="24" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{Binding SelectedProject.Description}"
+                                           Style="{StaticResource MutedText}"
+                                           Margin="0,4,16,0"
+                                           Visibility="{Binding SelectedProject.Description, Converter={StaticResource HasValueToVisible}}" />
+                            </StackPanel>
+                            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
+                                <Button Style="{StaticResource PrimaryButton}" Command="{Binding NewFeatureCommand}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <v:Icon Data="{StaticResource Icon.Plus}" Size="14" />
+                                        <TextBlock Text="Feature" Margin="6,0,0,0" />
+                                    </StackPanel>
+                                </Button>
+                                <Button Style="{StaticResource PrimaryButton}" Margin="8,0,0,0" Command="{Binding NewBugCommand}">
+                                    <StackPanel Orientation="Horizontal">
+                                        <v:Icon Data="{StaticResource Icon.Plus}" Size="14" />
+                                        <TextBlock Text="Bug" Margin="6,0,0,0" />
+                                    </StackPanel>
+                                </Button>
+                                <Button Content="Editar projeto" Margin="8,0,0,0" Command="{Binding EditProjectCommand}" />
+                            </StackPanel>
+                        </Grid>
+
+                        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,16">
+                            <Border Style="{StaticResource StatCard}">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding SelectedProject.FeaturesDone}" FontSize="20" FontWeight="SemiBold" />
+                                    <TextBlock Text="Features desenvolvidas" Style="{StaticResource MutedText}" FontSize="12" />
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource StatCard}">
+                                <StackPanel>
+                                    <TextBlock Text="{Binding SelectedProject.FeaturesTotal}" FontSize="20" FontWeight="SemiBold" />
+                                    <TextBlock Text="Features no total" Style="{StaticResource MutedText}" FontSize="12" />
+                                </StackPanel>
+                            </Border>
+                            <Border Style="{StaticResource StatCard}">
+                                <StackPanel>
+                                    <TextBlock FontSize="20" FontWeight="SemiBold">
+                                        <Run Text="{Binding SelectedProject.BugsDone, Mode=OneWay}" /><Run Text="/" /><Run Text="{Binding SelectedProject.BugsTotal, Mode=OneWay}" />
+                                    </TextBlock>
+                                    <TextBlock Text="Bugs resolvidos" Style="{StaticResource MutedText}" FontSize="12" />
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,0,0,12">
+                            <RadioButton Style="{StaticResource FilterRadio}" GroupName="filter" Content="Todos"
+                                         IsChecked="{Binding Filter, Converter={StaticResource Equals}, ConverterParameter=All}" />
+                            <RadioButton Style="{StaticResource FilterRadio}" GroupName="filter" Content="Features"
+                                         IsChecked="{Binding Filter, Converter={StaticResource Equals}, ConverterParameter=Feature}" />
+                            <RadioButton Style="{StaticResource FilterRadio}" GroupName="filter" Content="Bugs"
+                                         IsChecked="{Binding Filter, Converter={StaticResource Equals}, ConverterParameter=Bug}" />
+                            <RadioButton Style="{StaticResource FilterRadio}" GroupName="filter" Content="Concluídos"
+                                         IsChecked="{Binding Filter, Converter={StaticResource Equals}, ConverterParameter=Done}" />
+                        </StackPanel>
+
+                        <ScrollViewer Grid.Row="3" VerticalScrollBarVisibility="Auto">
+                            <Border Style="{StaticResource TableFrame}" VerticalAlignment="Top">
+                                <StackPanel>
+                                    <Border Style="{StaticResource TableHead}">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="90" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="100" />
+                                                <ColumnDefinition Width="130" />
+                                                <ColumnDefinition Width="110" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Text="Tipo" Style="{StaticResource TableHeadText}" />
+                                            <TextBlock Grid.Column="1" Text="Título" Style="{StaticResource TableHeadText}" />
+                                            <TextBlock Grid.Column="2" Text="Tarefas" Style="{StaticResource TableHeadText}" />
+                                            <TextBlock Grid.Column="3" Text="Estado" Style="{StaticResource TableHeadText}" />
+                                            <TextBlock Grid.Column="4" Text="Criado em" Style="{StaticResource TableHeadText}" />
+                                        </Grid>
+                                    </Border>
+                                    <ItemsControl ItemsSource="{Binding ItemsView}" ItemTemplate="{StaticResource ItemRow}" />
+                                    <TextBlock Text="Nada por aqui."
+                                               Style="{StaticResource MutedText}"
+                                               HorizontalAlignment="Center"
+                                               Margin="0,32"
+                                               Visibility="{Binding ItemsView.IsEmpty, Converter={StaticResource BoolToVisible}}" />
+                                </StackPanel>
+                            </Border>
+                        </ScrollViewer>
+                    </Grid>
+
+                    <!-- ===== Nível 3: tarefas do item (tabela) ===== -->
+                    <Grid Visibility="{Binding Level, Converter={StaticResource EqualsToVisible}, ConverterParameter=Item}">
+                        <Grid x:Name="ItemPage" DataContext="{Binding SelectedProject.CurrentItem}">
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="Auto" />
+                                <RowDefinition Height="*" />
+                            </Grid.RowDefinitions>
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                        <ContentControl Style="{StaticResource TypeBadge}"
+                                                        Content="{Binding Type, Converter={StaticResource TypeLabel}}" />
+                                        <ContentControl Style="{StaticResource StateBadge}"
+                                                        Margin="8,0,0,0"
+                                                        Content="{Binding State, Converter={StaticResource StateLabel}}" />
+                                    </StackPanel>
+                                    <TextBlock Text="{Binding Title}" FontSize="24" FontWeight="SemiBold" TextWrapping="Wrap" />
+                                    <TextBlock Text="{Binding Description}"
+                                               Style="{StaticResource MutedText}"
+                                               Margin="0,4,16,0"
+                                               TextWrapping="Wrap"
+                                               Visibility="{Binding Description, Converter={StaticResource HasValueToVisible}}" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
+                                    <ComboBox Width="170"
+                                              ItemsSource="{x:Static vm:ItemStateOptions.All}"
+                                              SelectedValuePath="Value"
+                                              DisplayMemberPath="Label"
+                                              SelectedValue="{Binding State, Mode=TwoWay}" />
+                                    <Button Content="Editar item"
+                                            Margin="8,0,0,0"
+                                            Command="{Binding DataContext.EditItemCommand, ElementName=Root}"
+                                            CommandParameter="{Binding}" />
+                                    <Button Content="Excluir item"
+                                            Style="{StaticResource GhostButton}"
+                                            Margin="4,0,0,0"
+                                            Command="{Binding DataContext.DeleteItemCommand, ElementName=Root}"
+                                            CommandParameter="{Binding}" />
+                                </StackPanel>
+                            </Grid>
+
+                            <Grid Grid.Row="1" Margin="0,16,0,12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Grid>
+                                    <TextBox Text="{Binding NewTaskTitle, UpdateSourceTrigger=PropertyChanged}">
+                                        <TextBox.InputBindings>
+                                            <KeyBinding Key="Return" Command="{Binding SubmitTaskCommand}" />
+                                        </TextBox.InputBindings>
+                                    </TextBox>
+                                    <TextBlock Text="Nova tarefa… (Enter)"
+                                               Margin="10,0"
+                                               VerticalAlignment="Center"
+                                               IsHitTestVisible="False"
+                                               Foreground="{DynamicResource MutedBrush}"
+                                               Visibility="{Binding NewTaskTitle, Converter={StaticResource NoValueToVisible}}" />
+                                </Grid>
+                                <Button Grid.Column="1"
+                                        Content="Adicionar"
+                                        Style="{StaticResource PrimaryButton}"
+                                        Margin="8,0,0,0"
+                                        Command="{Binding SubmitTaskCommand}" />
+                            </Grid>
+
+                            <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+                                <Border Style="{StaticResource TableFrame}" VerticalAlignment="Top">
+                                    <StackPanel>
+                                        <Border Style="{StaticResource TableHead}">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="60" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="50" />
+                                                </Grid.ColumnDefinitions>
+                                                <TextBlock Text="Feita" Style="{StaticResource TableHeadText}" />
+                                                <TextBlock Grid.Column="1" Style="{StaticResource TableHeadText}">
+                                                    <Run Text="Tarefa  ·  " /><Run Text="{Binding DoneCount, Mode=OneWay}" /><Run Text="/" /><Run Text="{Binding TaskCount, Mode=OneWay}" />
+                                                </TextBlock>
+                                            </Grid>
+                                        </Border>
+                                        <ItemsControl ItemsSource="{Binding Tasks}" ItemTemplate="{StaticResource TaskRow}" />
+                                        <TextBlock Text="Sem tarefas."
+                                                   Style="{StaticResource MutedText}"
+                                                   HorizontalAlignment="Center"
+                                                   Margin="0,32"
+                                                   Visibility="{Binding TaskCount, Converter={StaticResource ZeroToVisible}}" />
+                                    </StackPanel>
+                                </Border>
+                            </ScrollViewer>
+                        </Grid>
+                    </Grid>
+                </Grid>
             </Grid>
         </Grid>
 
