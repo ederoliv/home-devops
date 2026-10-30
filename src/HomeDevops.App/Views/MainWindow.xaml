@@ -241,7 +241,7 @@
                 </Grid.ColumnDefinitions>
 
                 <StackPanel Orientation="Horizontal" Margin="16,0,0,0" VerticalAlignment="Center">
-                    <v:Icon Data="{StaticResource Icon.Repeat}" Size="18" Foreground="{DynamicResource AccentBrush}" />
+                    <Image Source="/Assets/HomeDevopsLogo.png" Width="22" Height="22" RenderOptions.BitmapScalingMode="HighQuality" />
                     <TextBlock Text="Home DevOps" Margin="8,0,0,0" FontSize="15" FontWeight="SemiBold" />
                 </StackPanel>
 
